@@ -1,0 +1,153 @@
+services:
+  db:
+    image: mariadb:10.11
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    restart: always
+    volumes:
+      - db:/var/lib/mysql:Z
+    environment:
+      - MYSQL_ROOT_PASSWORD=nextcloud
+      - MARIADB_AUTO_UPGRADE=1
+      - MARIADB_DISABLE_UPGRADE_BACKUP=1
+    env_file:
+      - db.env
+
+  redis:
+    image: redis:alpine
+    restart: always
+
+  app:
+    image: nextcloud:fpm-alpine
+    restart: always
+    volumes:
+      - nextcloud:/var/www/html:z
+      # NOTE: The `volumes` config of the `cron` and `app` containers must match
+    environment:
+      - MYSQL_HOST=db
+      - REDIS_HOST=redis
+      - HTTP_PROXY=http://172.16.6.30:7897
+      - HTTPS_PROXY=http://172.16.6.30:7897
+      - NO_PROXY=10.0.0.0/8,192.168.0.0/16,172.16.0.0/12,localhost,127.0.0.1
+      - http_proxy=http://172.16.6.30:7897
+      - https_proxy=http://172.16.6.30:7897
+      - no_proxy=10.0.0.0/8,192.168.0.0/16,172.16.0.0/12,localhost,127.0.0.1
+    env_file:
+      - db.env
+    depends_on:
+      - db
+      - redis
+      - proxy
+    dns:
+    - 8.8.8.8
+    - 4.4.4.4
+
+  web:
+    build: ./web
+    restart: always
+    volumes:
+      - nextcloud:/var/www/html:z,ro
+      # NOTE: The `volumes` included here should match those of the `app` container (unless you know what you're doing)
+    # environment:
+      # - VIRTUAL_HOST=172.16.105.110.sslip.io
+      # - LETSENCRYPT_HOST=
+      # - LETSENCRYPT_EMAIL=
+    depends_on:
+      - app
+    networks:
+      - proxy-tier
+      - default
+
+  cron:
+    image: nextcloud:fpm-alpine
+    restart: always
+    volumes:
+      - nextcloud:/var/www/html:z
+      # NOTE: The `volumes` config of the `cron` and `app` containers must match
+    entrypoint: /cron.sh
+    depends_on:
+      - db
+      - redis
+
+  collabora:
+    image: collabora/code
+    environment:
+      - extra_params=--o:ssl.enable=false --o:ssl.termination=true --o:admin_console.username=username --o:admin_console.password=password
+    tty: true
+    restart: unless-stopped
+    networks:
+      - proxy-tier
+      
+  proxy:
+    image: nginx
+    restart: always
+    ports:
+      # - 80:80
+      - 443:443
+      - 9980:9980
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    volumes:
+      - certs:/etc/nginx/certs:z,ro
+      - /home/usister/docker/fpm/nginx-conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - proxy-tier
+
+
+
+  # proxy:
+  #   build: ./proxy
+  #   restart: always
+  #   ports:
+  #     - 80:80
+  #     - 443:443
+  #   labels:
+  #     - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+  #   volumes:
+  #     - certs:/etc/nginx/certs:z,ro
+  #     - vhost.d:/etc/nginx/vhost.d:z
+  #     - html:/usr/share/nginx/html:z
+  #     - /var/run/docker.sock:/tmp/docker.sock:z,ro
+  #   networks:
+  #     - proxy-tier
+
+  # letsencrypt-companion:
+  #   image: nginxproxy/acme-companion
+  #   restart: always
+  #   environment:
+  #     - DEFAULT_EMAIL=
+  #   volumes:
+  #     - certs:/etc/nginx/certs:z
+  #     - acme:/etc/acme.sh:z
+  #     - vhost.d:/etc/nginx/vhost.d:z
+  #     - html:/usr/share/nginx/html:z
+  #     - /var/run/docker.sock:/var/run/docker.sock:z,ro
+  #   networks:
+  #     - proxy-tier
+  #   depends_on:
+  #     - proxy
+
+ #self signed
+  omgwtfssl:
+    image: paulczar/omgwtfssl
+    restart: "no"
+    volumes:
+      - certs:/certs
+    environment:
+      - SSL_SUBJECT=172.16.105.110.sslip.io
+      - CA_SUBJECT=my@example.com
+      - SSL_KEY=/certs/172.16.105.110.sslip.io.key
+      - SSL_CSR=/certs/172.16.105.110.sslip.io.csr
+      - SSL_CERT=/certs/172.16.105.110.sslip.io.crt
+    networks:
+     - proxy-tier
+
+volumes:
+  db:
+  nextcloud:
+  certs:
+  # acme:
+  # vhost.d:
+  # html:
+
+networks:
+  proxy-tier:
