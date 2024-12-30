@@ -6,7 +6,6 @@ services:
     volumes:
       - db:/var/lib/mysql:Z
     environment:
-      - MYSQL_ROOT_PASSWORD=nextcloud
       - MARIADB_AUTO_UPGRADE=1
       - MARIADB_DISABLE_UPGRADE_BACKUP=1
     env_file:
@@ -25,6 +24,7 @@ services:
     environment:
       - MYSQL_HOST=db
       - REDIS_HOST=redis
+      # nextcloud的应用商店一般需要代理才能访问，把 http://172.16.6.30:7897 替换成自己的代理地址
       - HTTP_PROXY=http://172.16.6.30:7897
       - HTTPS_PROXY=http://172.16.6.30:7897
       - NO_PROXY=10.0.0.0/8,192.168.0.0/16,172.16.0.0/12,localhost,127.0.0.1
@@ -71,6 +71,7 @@ services:
   collabora:
     image: collabora/code
     environment:
+      # 修改 --o:admin_console.username=username --o:admin_console.password=password 为自己的用户名和密码，或者删除这两个参数。
       - extra_params=--o:ssl.enable=false --o:ssl.termination=true --o:admin_console.username=username --o:admin_console.password=password
     tty: true
     restart: unless-stopped
@@ -92,40 +93,6 @@ services:
     networks:
       - proxy-tier
 
-
-
-  # proxy:
-  #   build: ./proxy
-  #   restart: always
-  #   ports:
-  #     - 80:80
-  #     - 443:443
-  #   labels:
-  #     - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
-  #   volumes:
-  #     - certs:/etc/nginx/certs:z,ro
-  #     - vhost.d:/etc/nginx/vhost.d:z
-  #     - html:/usr/share/nginx/html:z
-  #     - /var/run/docker.sock:/tmp/docker.sock:z,ro
-  #   networks:
-  #     - proxy-tier
-
-  # letsencrypt-companion:
-  #   image: nginxproxy/acme-companion
-  #   restart: always
-  #   environment:
-  #     - DEFAULT_EMAIL=
-  #   volumes:
-  #     - certs:/etc/nginx/certs:z
-  #     - acme:/etc/acme.sh:z
-  #     - vhost.d:/etc/nginx/vhost.d:z
-  #     - html:/usr/share/nginx/html:z
-  #     - /var/run/docker.sock:/var/run/docker.sock:z,ro
-  #   networks:
-  #     - proxy-tier
-  #   depends_on:
-  #     - proxy
-
  #self signed
   omgwtfssl:
     image: paulczar/omgwtfssl
@@ -133,6 +100,7 @@ services:
     volumes:
       - certs:/certs
     environment:
+    # 将 172.16.105.110.sslip.io 换成自己的内网域名，如果如果没有域名，将 172.16.105.110.sslip.io 换成 your_ip_address.sslip.io 
       - SSL_SUBJECT=172.16.105.110.sslip.io
       - CA_SUBJECT=my@example.com
       - SSL_KEY=/certs/172.16.105.110.sslip.io.key

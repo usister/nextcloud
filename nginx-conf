@@ -44,62 +44,6 @@ http {
         server web:80;
     }
 
-    # server {
-    #     listen 9980 ssl;
-    #     ssl_certificate /etc/nginx/certs/$host.crt;
-    #     ssl_certificate_key /etc/nginx/certs/$host.key;
-    #     server_name 172.16.105.110.sslip.io;
-    #     location / {
-    #         proxy_pass http://collabora;
-    #         proxy_set_header Upgrade $http_upgrade;
-    #         proxy_set_header Connection "upgrade";
-    #         proxy_set_header Host $host;
-    #         proxy_set_header X-Real-IP $remote_addr;
-    #         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    #         proxy_set_header X-Forwarded-Proto $scheme;
-    #         proxy_set_header X-Forwarded-Protocol $scheme;
-    #         proxy_set_header X-Forwarded-Host $http_host;
-    #         # rewrite http https;
-    #     }
-    #     # static files
-    #     location ^~ /browser {
-    #         proxy_pass http://collabora;
-    #         proxy_set_header Host $host;
-    #     }
-
-    #     # WOPI discovery URL
-    #     location ^~ /hosting/discovery {
-    #         proxy_pass http://collabora;
-    #         proxy_set_header Host $host;
-    #     }
-    #     # Capabilities
-    #     location ^~ /hosting/capabilities {
-    #         proxy_pass http://collabora;
-    #         proxy_set_header Host $host;
-    #     }
-    #     # main websocket
-    #     location ~ ^/cool/(.*)/ws$ {
-    #         proxy_pass http://collabora;
-    #         proxy_set_header Upgrade $http_upgrade;
-    #         proxy_set_header Connection "Upgrade";
-    #         proxy_set_header Host $host;
-    #         proxy_read_timeout 36000s;
-    #     }
-    #     # download, presentation and image upload
-    #     location ~ ^/(c|l)ool {
-    #         proxy_pass http://collabora;
-    #         proxy_set_header Host $host;
-    #     }
-    #     # Admin Console websocket
-    #     location ^~ /cool/adminws {
-    #         proxy_pass http://collabora;
-    #         proxy_set_header Upgrade $http_upgrade;
-    #         proxy_set_header Connection "Upgrade";
-    #         proxy_set_header Host $host;
-    #         proxy_read_timeout 36000s;
-    #     }
-    # }
-
     server {
         listen 443 ssl;
         server_name 172.16.105.110.sslip.io;
@@ -132,10 +76,6 @@ http {
         }
                 listen 9980 ssl;
         server_name 172.16.105.110.sslip.io;
-
-
-        ssl_certificate /etc/nginx/certs/$host.crt;
-        ssl_certificate_key /etc/nginx/certs/$host.key;
 
         # static files
         location ^~ /browser {
