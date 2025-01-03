@@ -91,11 +91,15 @@ services:
       # - 9980:9980
     # labels:
     #   - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
     volumes:
-      - certs:/etc/nginx/certs:z,ro
-      - ./nginx-conf:/etc/nginx/nginx.conf:ro
+      - certs:/etc/nginx/certs:ro,z
+      - ./nginx-conf:/etc/nginx/templates/default.conf.template:ro
     networks:
       - proxy-tier
+    depends_on:
+      - busybox
 
  #self signed
   omgwtfssl:
@@ -104,7 +108,6 @@ services:
     volumes:
       - certs:/certs
     environment:
-    # 将 172.16.105.110.sslip.io 换成自己的内网域名，如果如果没有域名，将 172.16.105.110.sslip.io 换成 your_ip_address.sslip.io 
       - SSL_SUBJECT=${DOMAIN_NAME}
       - CA_SUBJECT=my@example.com
       - SSL_KEY=/certs/${DOMAIN_NAME}.key
@@ -112,6 +115,16 @@ services:
       - SSL_CERT=/certs/${DOMAIN_NAME}.crt
     networks:
      - proxy-tier
+
+# 修改key文件归属
+  busybox:
+    image: busybox
+    restart: no
+    volumes:
+      - certs:/certs
+    command: ["chown", "101:101", "/certs/${DOMAIN_NAME}.key"]
+    depends_on:
+      - omgwtfssl
 
 volumes:
   db:

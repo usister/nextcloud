@@ -1,30 +1,30 @@
-user nginx;
-worker_processes auto;
+# user nginx;
+# worker_processes auto;
 
 # error_log /var/log/nginx/error.log info;
-error_log /var/log/nginx/error.log debug;
+# error_log /var/log/nginx/error.log debug;
 
-pid /var/run/nginx.pid;
+# pid /var/run/nginx.pid;
 
-events {
-    worker_connections 1024;
-}
+# events {
+#     worker_connections 1024;
+# }
 
-http {
-    # include /etc/nginx/mime.types;
-    # default_type application/octet-stream;
-    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-    '$status $body_bytes_sent "$http_referer" '
-    '"$http_user_agent" "$http_x_forwarded_for"';
+# http {
+#     # include /etc/nginx/mime.types;
+#     # default_type application/octet-stream;
+#     log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+#     '$status $body_bytes_sent "$http_referer" '
+#     '"$http_user_agent" "$http_x_forwarded_for"';
 
-    access_log /var/log/nginx/access.log main;
+#     access_log /var/log/nginx/access.log main;
 
-    sendfile on;
-    #tcp_nopush     on;
+#     sendfile on;
+#     #tcp_nopush     on;
 
-    keepalive_timeout 65;
+#     keepalive_timeout 65;
 
-    gzip on;
+#     gzip on;
 
     # include /etc/nginx/conf.d/*.conf;
     # 定义 HTTP 到 HTTPS 的重定向
@@ -46,7 +46,8 @@ http {
 
     server {
         listen 443 ssl;
-        server_name 172.16.105.110.sslip.io;
+        
+        server_name ${DOMAIN_NAME};
 
 
         ssl_certificate /etc/nginx/certs/$host.crt;
@@ -75,7 +76,7 @@ http {
             return 301 $scheme://$host/index.php$uri;
         }
                 listen 9980 ssl;
-        server_name 172.16.105.110.sslip.io;
+        # server_name 172.16.105.110.sslip.io;
 
         # static files
         location ^~ /browser {
@@ -124,4 +125,4 @@ http {
             proxy_read_timeout 36000s;
         }
     }
-}
+# }
