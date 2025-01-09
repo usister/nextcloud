@@ -1,5 +1,5 @@
 # nextcloud
-A docker compose yaml for nextcloud and collabora code.
+A docker compose yaml for nextcloud and collabora code.  
 一个nextcloud的docker compose文件，使用自签名证书，独立部署mariadb和collabora code。
 # 使用方法
 ## 克隆项目
