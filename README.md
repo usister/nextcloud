@@ -43,10 +43,11 @@ url为 https://your_ip_address.sslip.io 或 https://your_domain.sslip.io 不需�
     docker-compose down
 
 ## 清理及删除
-**<font color=#FF6060>注意，这可能会删除用户数据</font>**
+**<font color=#FF3030>注意，这会删除用户数据，除非你确定删除，否则不要执行下面的命令。</br>建议参考docker手册管理卷</font>**
 
     docker-compose down -v
 
-
 # 注意事项
 collabora code使用nextcloud用于在线编辑的外置服务器，目前没有好的身份验证手段，因此本项目只局限在局域网使用。如果要关闭collabora code，在运行后手动停止/删除 code容器，或者运行前注释掉 compose.yaml文件中的code部分。
+
+#
