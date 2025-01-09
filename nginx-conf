@@ -1,128 +1,107 @@
-# user nginx;
-# worker_processes auto;
+server {
+    listen 80;
+    # server_name yourdomain.com;
+    # 强制所有 HTTP 请求重定向到 HTTPS
+    return 301 https://$host$request_uri;
+}
 
-# error_log /var/log/nginx/error.log info;
-# error_log /var/log/nginx/error.log debug;
+# HTTPS 配置
 
-# pid /var/run/nginx.pid;
+upstream collabora {
+    server collabora:9980;
+}
+upstream web {
+    server web:80;
+}
 
-# events {
-#     worker_connections 1024;
-# }
+server {
+    listen 443 ssl;
 
-# http {
-#     # include /etc/nginx/mime.types;
-#     # default_type application/octet-stream;
-#     log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-#     '$status $body_bytes_sent "$http_referer" '
-#     '"$http_user_agent" "$http_x_forwarded_for"';
+    server_name ${DOMAIN_NAME}    ;
 
-#     access_log /var/log/nginx/access.log main;
 
-#     sendfile on;
-#     #tcp_nopush     on;
+    ssl_certificate /etc/nginx/certs/$host.crt;
+    ssl_certificate_key /etc/nginx/certs/$host.key;
 
-#     keepalive_timeout 65;
-
-#     gzip on;
-
-    # include /etc/nginx/conf.d/*.conf;
-    # 定义 HTTP 到 HTTPS 的重定向
-    server {
-        listen 80;
-        # server_name yourdomain.com;
-        # 强制所有 HTTP 请求重定向到 HTTPS
-        return 301 https://$host$request_uri;
+    location / {
+        proxy_pass http://web;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Protocol $scheme;
+        proxy_set_header X-Forwarded-Host $http_host;
+    }
+    location /.well-known/carddav {
+        return 301 $scheme://$host/remote.php/dav;
     }
 
-    # HTTPS 配置
-
-    upstream collabora {
-        server collabora:9980;
-    }
-    upstream web {
-        server web:80;
+    location /.well-known/caldav {
+        return 301 $scheme://$host/remote.php/dav;
     }
 
-    server {
-        listen 443 ssl;
-        
-        server_name ${DOMAIN_NAME};
-
-
-        ssl_certificate /etc/nginx/certs/$host.crt;
-        ssl_certificate_key /etc/nginx/certs/$host.key;
-
-        location / {
-            proxy_pass http://web;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header X-Forwarded-Protocol $scheme;
-            proxy_set_header X-Forwarded-Host $http_host;
-        }
-        location /.well-known/carddav {
-            return 301 $scheme://$host/remote.php/dav;
-        }
-
-        location /.well-known/caldav {
-            return 301 $scheme://$host/remote.php/dav;
-        }
-
-        location ^~ /.well-known {
-            return 301 $scheme://$host/index.php$uri;
-        }
-                listen 9980 ssl;
-        # server_name 172.16.105.110.sslip.io;
-
-        # static files
-        location ^~ /browser {
-            proxy_pass http://collabora;
-            proxy_set_header Host $host;
-        }
-
-
-        # WOPI discovery URL
-        location ^~ /hosting/discovery {
-            proxy_pass http://collabora;
-            proxy_set_header Host $host;
-        }
-
-
-        # Capabilities
-        location ^~ /hosting/capabilities {
-            proxy_pass http://collabora;
-            proxy_set_header Host $host;
-        }
-
-
-        # main websocket
-        location ~ ^/cool/(.*)/ws$ {
-            proxy_pass http://collabora;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "Upgrade";
-            proxy_set_header Host $host;
-            proxy_read_timeout 36000s;
-        }
-
-
-        # download, presentation and image upload
-        location ~ ^/(c|l)ool {
-            proxy_pass http://collabora;
-            proxy_set_header Host $host;
-        }
-
-
-        # Admin Console websocket
-        location ^~ /cool/adminws {
-            proxy_pass http://collabora;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "Upgrade";
-            proxy_set_header Host $host;
-            proxy_read_timeout 36000s;
-        }
+    location ^~ /.well-known {
+        return 301 $scheme://$host/index.php$uri;
     }
-# }
+
+    # static files
+    location ^~ /browser {
+        proxy_pass http://collabora;
+        proxy_set_header Host $host;
+    }
+
+
+    # WOPI discovery URL
+    location ^~ /hosting/discovery {
+        proxy_pass http://collabora;
+        proxy_set_header Host $host;
+    }
+
+
+    # Capabilities
+    location ^~ /hosting/capabilities {
+        proxy_pass http://collabora;
+        proxy_set_header Host $host;
+    }
+
+
+    # main websocket
+    location ~ ^/cool/(.*)/ws$ {
+        proxy_pass http://collabora;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 36000s;
+    }
+
+
+    # download, presentation and image upload
+    location ~ ^/(c|l)ool {
+        proxy_pass http://collabora;
+        proxy_set_header Host $host;
+    }
+
+
+    # Admin Console websocket
+    location ^~ /cool/adminws {
+        proxy_pass http://collabora;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 36000s;
+    }
+}
+# server {
+#         listen 80 default_server;
+#         listen [::]:80 default_server;
+#         listen 443 ssl default_server;
+#         listen [::]:443 ssl default_server;
+
+#         # 禁止所有通过 IP 地址访问的请求
+#         return 444;
+
+#         # 可选：SSL 配置，防止 HTTPS 请求警告
+#         # ssl_certificate /etc/nginx/ssl/nginx.crt;
+#         # ssl_certificate_key /etc/nginx/ssl/nginx.key;
