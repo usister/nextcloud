@@ -18,7 +18,7 @@ A docker compose yaml for nextcloud and collabora code.
     docker-compose up -d
 ## 配置collabora code
     浏览器访问 https://your_ip_address.sslip.io 
-    ![Initial_Iamge](https://github.com/usister/nextcloud/blob/main/image/initial.png)
+    ![Initial_Iamge](https://raw.githubusercontent.com/usister/nextcloud/refs/heads/main/image/initial.png)
 ## 停止容器
     docker compose down
 ## 清理及删除
